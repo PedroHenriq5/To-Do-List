@@ -1,88 +1,95 @@
-function task() {
-  const btnPlus = document.querySelector(".btnPlus");
-  const addList = document.querySelector(".addList");
-  const sendTask = document.querySelector(".sendTask");
+  function task() {
+    const btnPlus = document.querySelector(".btnPlus");
+    const addList = document.querySelector(".addList");
+    const sendTask = document.querySelector(".sendTask");
 
-  const storage = localStorage;
+    const storage = localStorage;
 
-  // Pega as tarefas do storage e garante que seja um array
-  let tasksToDo = JSON.parse(storage.getItem("tasksToDo")) || [];
-  if (!Array.isArray(tasksToDo)) tasksToDo = [];
+    // Pega as tarefas do storage e garante que seja um array
+    let tasks = JSON.parse(storage.getItem("tasks")) || [];
+    if (!Array.isArray(tasks)) tasks = [];
 
-  let tasksSolved = JSON.parse(storage.getItem("tasksSolved")) || [];
-  if (!Array.isArray(tasksSolved)) tasksSolved = [];
 
-  // Função para criar a tarefa na tela
-  function criarTask(text) {
-    const li = document.createElement("li");
-    li.classList.add("Task");
+    // Função para criar a tarefa na tela
+    function criarTask(task) {
+      const li = document.createElement("li");
+      li.classList.add("Task");
+      
+      if (task.concluded) {
+        li.classList.add("Task", "finished");
+      }
 
-    const span = document.createElement("span");
-    span.textContent = text;
+      const span = document.createElement("span");
+      span.textContent = task.text;
 
-    const deleteTask = document.createElement("button");
-    deleteTask.classList.add("deleteTask");
-    deleteTask.innerHTML = '<i class="bi bi-archive-fill"></i>';
+      const deleteTask = document.createElement("button");
+      deleteTask.classList.add("deleteTask");
+      deleteTask.innerHTML = '<i class="bi bi-archive-fill"></i>';
 
-    const taskSolved = document.createElement("button");
-    taskSolved.classList.add("taskSolved");
-    taskSolved.innerHTML = '<i class="bi bi-clipboard2-check-fill"></i>';
+      const taskSolved = document.createElement("button");
+      taskSolved.classList.add("taskSolved");
+      taskSolved.innerHTML = '<i class="bi bi-clipboard2-check-fill"></i>';
 
-    li.append(span, deleteTask, taskSolved);
-    addList.appendChild(li);
+      li.append(span, deleteTask, taskSolved);
+      addList.appendChild(li);
 
-    // Evento para remover tarefa
-    deleteTask.addEventListener("click", () => {
-      li.remove();
+      // Evento para remover tarefa
+      deleteTask.addEventListener("click", () => {
+        li.remove();
 
-      tasksToDo = tasksToDo.filter((t) => t !== text);
-      storage.setItem("tasksToDo", JSON.stringify(tasksToDo));
+        tasks = tasks.filter((t) => t.id !== task.id);
+        storage.setItem("tasks", JSON.stringify(tasks));
+      });
 
-      tasksSolved = tasksSolved.filter((t) => t !== text);
-      storage.setItem("tasksSolved", JSON.stringify(tasksSolved));
+      //Evento para concluir tarefa
+      taskSolved.addEventListener("click", () => {
+
+        task.concluded = !task.concluded;
+
+        if (task.concluded) {
+          li.classList.add("finished");
+        } else {
+          li.classList.remove("finished");
+        }
+        storage.setItem("tasks", JSON.stringify(tasks));
+      });
+    }
+
+    // Carrega as tarefas existentes
+    tasks.forEach((task) => criarTask(task));
+
+    // Evento do botão de adicionar
+    btnPlus.addEventListener("click", (event) => {
+      event.preventDefault();
+
+      const text = sendTask.value.trim();
+
+      if (text === "") {
+        alert("Digite uma tarefa!");
+        return;
+      }
+
+      const task = {
+        text: text,
+        concluded: false,
+        id: Date.now(),
+      };
+
+      criarTask(task);
+
+      tasks.push(task);
+      storage.setItem("tasks", JSON.stringify(tasks));
+
+      sendTask.value = "";
     });
 
-    //Evento para concluir tarefa
-    taskSolved.addEventListener("click", () => {
-      li.classList.add("finished");
-
-      tasksToDo = tasksToDo.filter((t) => t !== text);
-      storage.setItem("tasksToDo", JSON.stringify(tasksToDo));
-
-      tasksSolved.push(text);
-      storage.setItem("tasksSolved", JSON.stringify(tasksSolved));
+    // Enter no input também adiciona
+    sendTask.addEventListener("keypress", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        btnPlus.click();
+      }
     });
   }
 
-  // Carrega as tarefas existentes
-  tasksToDo.forEach((text) => criarTask(text));
-
-  // Evento do botão de adicionar
-  btnPlus.addEventListener("click", (event) => {
-    event.preventDefault();
-
-    const text = sendTask.value.trim();
-
-    if (text === "") {
-      alert("Digite uma tarefa!");
-      return;
-    }
-
-    criarTask(text);
-
-    tasksToDo.push(text);
-    storage.setItem("tasksToDo", JSON.stringify(tasksToDo));
-
-    sendTask.value = "";
-  });
-
-  // Enter no input também adiciona
-  sendTask.addEventListener("keypress", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      btnPlus.click();
-    }
-  });
-}
-
-task();
+  task();
